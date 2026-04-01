@@ -5,6 +5,7 @@ import {
   changeUserRole,
   getDashboardStats,
   subscribeNewsletter,
+  adminDeleteIdea,
 } from "../controllers/admin.controller";
 import { protect } from "../middlewares/protect.middleware";
 import { adminOnly } from "../middlewares/adminOnly.middleware";
@@ -15,6 +16,7 @@ router.get("/stats", protect, adminOnly, getDashboardStats);
 router.get("/users", protect, adminOnly, getAllUsers);
 router.patch("/users/:id/toggle-active", protect, adminOnly, toggleUserActive);
 router.patch("/users/:id/role", protect, adminOnly, changeUserRole);
+router.delete("/ideas/:id", protect, adminOnly, adminDeleteIdea);
 router.post("/newsletter/subscribe", subscribeNewsletter);
 
 export default router;

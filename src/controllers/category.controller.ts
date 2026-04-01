@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
+import { catchAsync } from "../lib/catchAsync";
 import { prisma } from "../lib/prisma";
 
-export const getCategories = async (_req: Request, res: Response) => {
+export const getCategories = catchAsync(async (_req: Request, res: Response) => {
   const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
   res.json(categories);
-};
+});
 
-export const createCategory = async (req: Request, res: Response) => {
+export const createCategory = catchAsync(async (req: Request, res: Response) => {
   const { name } = req.body;
   if (!name?.trim()) {
     res.status(400).json({ message: "Category name is required" });
@@ -19,9 +20,9 @@ export const createCategory = async (req: Request, res: Response) => {
   }
   const category = await prisma.category.create({ data: { name: name.trim() } });
   res.status(201).json(category);
-};
+});
 
-export const deleteCategory = async (req: Request, res: Response) => {
+export const deleteCategory = catchAsync(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
   const ideas = await prisma.idea.count({ where: { categoryId: id } });
   if (ideas > 0) {
@@ -30,4 +31,4 @@ export const deleteCategory = async (req: Request, res: Response) => {
   }
   await prisma.category.delete({ where: { id } });
   res.json({ message: "Category deleted" });
-};
+});

@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
+import { catchAsync } from "../lib/catchAsync";
 import { prisma } from "../lib/prisma";
 
 const ideaPublicSelect = {
@@ -15,7 +17,7 @@ const ideaPublicSelect = {
   _count: { select: { votes: true } },
 };
 
-export const getApprovedIdeas = async (req: Request, res: Response) => {
+export const getApprovedIdeas = catchAsync(async (req: Request, res: Response) => {
   const { page = "1", limit = "10", category, sort = "recent", search, isPaid } =
     req.query as Record<string, string>;
 
@@ -40,9 +42,9 @@ export const getApprovedIdeas = async (req: Request, res: Response) => {
   ]);
 
   res.json({ ideas, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
-};
+});
 
-export const getIdeaById = async (req: Request, res: Response) => {
+export const getIdeaById = catchAsync(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
 
   const idea = await prisma.idea.findUnique({
@@ -82,9 +84,9 @@ export const getIdeaById = async (req: Request, res: Response) => {
   }
 
   res.json(idea);
-};
+});
 
-export const createIdea = async (req: Request, res: Response) => {
+export const createIdea = catchAsync(async (req: Request, res: Response) => {
   const { title, problemStatement, proposedSolution, description, categoryId, isPaid, price, images, status } =
     req.body;
 
@@ -120,9 +122,9 @@ export const createIdea = async (req: Request, res: Response) => {
   });
 
   res.status(201).json(idea);
-};
+});
 
-export const updateIdea = async (req: Request, res: Response) => {
+export const updateIdea = catchAsync(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
   const idea = await prisma.idea.findUnique({ where: { id } });
 
@@ -162,9 +164,9 @@ export const updateIdea = async (req: Request, res: Response) => {
   });
 
   res.json(updated);
-};
+});
 
-export const deleteIdea = async (req: Request, res: Response) => {
+export const deleteIdea = catchAsync(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
   const idea = await prisma.idea.findUnique({ where: { id } });
 
@@ -185,9 +187,9 @@ export const deleteIdea = async (req: Request, res: Response) => {
 
   await prisma.idea.delete({ where: { id } });
   res.json({ message: "Idea deleted" });
-};
+});
 
-export const submitForReview = async (req: Request, res: Response) => {
+export const submitForReview = catchAsync(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
   const idea = await prisma.idea.findUnique({ where: { id } });
 
@@ -212,9 +214,9 @@ export const submitForReview = async (req: Request, res: Response) => {
   });
 
   res.json(updated);
-};
+});
 
-export const approveIdea = async (req: Request, res: Response) => {
+export const approveIdea = catchAsync(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
   const idea = await prisma.idea.findUnique({ where: { id } });
   if (!idea) {
@@ -228,9 +230,9 @@ export const approveIdea = async (req: Request, res: Response) => {
   });
 
   res.json(updated);
-};
+});
 
-export const rejectIdea = async (req: Request, res: Response) => {
+export const rejectIdea = catchAsync(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
   const { feedback } = req.body;
   if (!feedback?.trim()) {
@@ -250,9 +252,9 @@ export const rejectIdea = async (req: Request, res: Response) => {
   });
 
   res.json(updated);
-};
+});
 
-export const getMyIdeas = async (req: Request, res: Response) => {
+export const getMyIdeas = catchAsync(async (req: Request, res: Response) => {
   const ideas = await prisma.idea.findMany({
     where: { authorId: req.user!.id },
     include: {
@@ -263,9 +265,9 @@ export const getMyIdeas = async (req: Request, res: Response) => {
   });
 
   res.json(ideas);
-};
+});
 
-export const getAllIdeasAdmin = async (req: Request, res: Response) => {
+export const getAllIdeasAdmin = catchAsync(async (req: Request, res: Response) => {
   const { status, page = "1", limit = "20" } = req.query as Record<string, string>;
   const skip = (Number(page) - 1) * Number(limit);
 
@@ -288,4 +290,4 @@ export const getAllIdeasAdmin = async (req: Request, res: Response) => {
   ]);
 
   res.json({ ideas, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
-};
+});

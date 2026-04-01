@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
+import { catchAsync } from "../lib/catchAsync";
 import { prisma } from "../lib/prisma";
 
-export const getAllUsers = async (req: Request, res: Response) => {
+export const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const { page = "1", limit = "20", search } = req.query as Record<string, string>;
   const skip = (Number(page) - 1) * Number(limit);
 
@@ -33,9 +35,9 @@ export const getAllUsers = async (req: Request, res: Response) => {
   ]);
 
   res.json({ users, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
-};
+});
 
-export const toggleUserActive = async (req: Request, res: Response) => {
+export const toggleUserActive = catchAsync(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) {
@@ -55,9 +57,9 @@ export const toggleUserActive = async (req: Request, res: Response) => {
   });
 
   res.json(updated);
-};
+});
 
-export const changeUserRole = async (req: Request, res: Response) => {
+export const changeUserRole = catchAsync(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
   const { role } = req.body;
   if (role !== "MEMBER" && role !== "ADMIN") {
@@ -77,9 +79,9 @@ export const changeUserRole = async (req: Request, res: Response) => {
   });
 
   res.json(updated);
-};
+});
 
-export const getDashboardStats = async (_req: Request, res: Response) => {
+export const getDashboardStats = catchAsync(async (_req: Request, res: Response) => {
   const [totalUsers, totalIdeas, pendingIdeas, approvedIdeas] = await Promise.all([
     prisma.user.count(),
     prisma.idea.count(),
@@ -88,9 +90,9 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
   ]);
 
   res.json({ totalUsers, totalIdeas, pendingIdeas, approvedIdeas });
-};
+});
 
-export const subscribeNewsletter = async (req: Request, res: Response) => {
+export const subscribeNewsletter = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.body;
   if (!email) {
     res.status(400).json({ message: "Email is required" });
@@ -102,4 +104,4 @@ export const subscribeNewsletter = async (req: Request, res: Response) => {
     create: { email },
   });
   res.json({ message: "Subscribed successfully" });
-};
+});

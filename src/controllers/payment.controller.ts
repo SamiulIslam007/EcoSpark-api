@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import Stripe from "stripe";
+import { catchAsync } from "../lib/catchAsync";
 import { prisma } from "../lib/prisma";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-03-25.dahlia",
 });
 
-export const createCheckoutSession = async (req: Request, res: Response) => {
+export const createCheckoutSession = catchAsync(async (req: Request, res: Response) => {
   const { ideaId } = req.body;
 
   const idea = await prisma.idea.findUnique({ where: { id: ideaId } });
@@ -42,7 +43,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
   });
 
   res.json({ url: session.url });
-};
+});
 
 export const stripeWebhook = async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"];
@@ -81,10 +82,10 @@ export const stripeWebhook = async (req: Request, res: Response) => {
   res.json({ received: true });
 };
 
-export const checkPurchaseStatus = async (req: Request, res: Response) => {
+export const checkPurchaseStatus = catchAsync(async (req: Request, res: Response) => {
   const ideaId = req.params["ideaId"] as string;
   const purchase = await prisma.purchase.findUnique({
     where: { userId_ideaId: { userId: req.user!.id, ideaId } },
   });
   res.json({ purchased: Boolean(purchase) });
-};
+});

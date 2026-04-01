@@ -39,6 +39,7 @@ model User {
   ideas     Idea[]
   votes     Vote[]
   purchases Purchase[]
+  comments  Comment[]
 }
 
 model Session {
@@ -104,6 +105,7 @@ model Idea {
 
   votes     Vote[]
   purchases Purchase[]
+  comments  Comment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -131,6 +133,25 @@ model Purchase {
   createdAt       DateTime @default(now())
 
   @@unique([userId, ideaId])
+}
+
+model Comment {
+  id      String @id @default(cuid())
+  content String
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  ideaId String
+  idea   Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  // Self-referencing for nested (reply) comments
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model NewsletterSubscriber {

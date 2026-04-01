@@ -18,14 +18,23 @@ const ideaPublicSelect = {
 };
 
 export const getApprovedIdeas = catchAsync(async (req: Request, res: Response) => {
-  const { page = "1", limit = "10", category, sort = "recent", search, isPaid } =
-    req.query as Record<string, string>;
+  const {
+    page = "1",
+    limit = "10",
+    category,
+    sort = "recent",
+    search,
+    isPaid,
+    authorId,
+    minVotes,
+  } = req.query as Record<string, string>;
 
   const skip = (Number(page) - 1) * Number(limit);
 
   const where: any = { status: "APPROVED" };
   if (category) where.categoryId = category;
   if (isPaid !== undefined) where.isPaid = isPaid === "true";
+  if (authorId) where.authorId = authorId;
   if (search) {
     where.OR = [
       { title: { contains: search, mode: "insensitive" } },
@@ -36,10 +45,31 @@ export const getApprovedIdeas = catchAsync(async (req: Request, res: Response) =
   const orderBy: any =
     sort === "top_voted" ? { votes: { _count: "desc" } } : { createdAt: "desc" };
 
-  const [ideas, total] = await Promise.all([
-    prisma.idea.findMany({ where, skip, take: Number(limit), orderBy, select: ideaPublicSelect }),
-    prisma.idea.count({ where }),
-  ]);
+  let ideas = await prisma.idea.findMany({
+    where,
+    skip,
+    take: Number(limit),
+    orderBy,
+    select: {
+      ...ideaPublicSelect,
+      _count: { select: { votes: true, comments: true } },
+    },
+  });
+
+  // Filter by minimum upvote count if provided
+  if (minVotes) {
+    const min = Number(minVotes);
+    const ideaIds = ideas.map((i) => i.id);
+    const voteCounts = await prisma.vote.groupBy({
+      by: ["ideaId"],
+      where: { ideaId: { in: ideaIds }, type: "UPVOTE" },
+      _count: { ideaId: true },
+    });
+    const countMap = new Map(voteCounts.map((v) => [v.ideaId, v._count.ideaId]));
+    ideas = ideas.filter((i) => (countMap.get(i.id) ?? 0) >= min);
+  }
+
+  const total = await prisma.idea.count({ where });
 
   res.json({ ideas, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
 });

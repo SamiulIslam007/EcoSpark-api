@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
+import { catchAsync } from "../lib/catchAsync";
 import { prisma } from "../lib/prisma";
 
-export const castVote = async (req: Request, res: Response) => {
+export const castVote = catchAsync(async (req: Request, res: Response) => {
   const ideaId = req.params["ideaId"] as string;
   const { type } = req.body;
 
@@ -33,13 +34,13 @@ export const castVote = async (req: Request, res: Response) => {
 
   const vote = await prisma.vote.create({ data: { type, userId: req.user!.id, ideaId } });
   res.status(201).json(vote);
-};
+});
 
-export const getVotesForIdea = async (req: Request, res: Response) => {
+export const getVotesForIdea = catchAsync(async (req: Request, res: Response) => {
   const ideaId = req.params["ideaId"] as string;
   const votes = await prisma.vote.findMany({
     where: { ideaId },
     select: { userId: true, type: true },
   });
   res.json(votes);
-};
+});

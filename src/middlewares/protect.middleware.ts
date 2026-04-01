@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, NextFunction } from "express";
 import { auth } from "../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
@@ -9,6 +10,11 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
 
   if (!session) {
     res.status(401).json({ message: "Authentication required" });
+    return;
+  }
+
+  if ((session.user as any).isActive === false) {
+    res.status(403).json({ message: "Your account has been deactivated. Contact support." });
     return;
   }
 

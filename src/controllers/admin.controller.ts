@@ -92,6 +92,17 @@ export const getDashboardStats = catchAsync(async (_req: Request, res: Response)
   res.json({ totalUsers, totalIdeas, pendingIdeas, approvedIdeas });
 });
 
+export const adminDeleteIdea = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params["id"] as string;
+  const idea = await prisma.idea.findUnique({ where: { id } });
+  if (!idea) {
+    res.status(404).json({ message: "Idea not found" });
+    return;
+  }
+  await prisma.idea.delete({ where: { id } });
+  res.json({ message: "Idea deleted by admin" });
+});
+
 export const subscribeNewsletter = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.body;
   if (!email) {

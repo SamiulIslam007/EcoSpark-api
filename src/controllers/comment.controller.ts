@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import { catchAsync } from "../lib/catchAsync";
 import { prisma } from "../lib/prisma";
 
-// GET /comments/:ideaId — fetch all top-level comments with nested replies
+const commentModel = (prisma as any).comment;
+
 export const getComments = catchAsync(async (req: Request, res: Response) => {
   const ideaId = req.params["ideaId"] as string;
 
-  const comments = await prisma.comment.findMany({
+  const comments = await commentModel.findMany({
     where: { ideaId, parentId: null },
     include: {
       author: { select: { id: true, name: true } },
@@ -29,7 +31,6 @@ export const getComments = catchAsync(async (req: Request, res: Response) => {
   res.json(comments);
 });
 
-// POST /comments/:ideaId — create a new comment or reply
 export const createComment = catchAsync(async (req: Request, res: Response) => {
   const ideaId = req.params["ideaId"] as string;
   const { content, parentId } = req.body;
@@ -45,16 +46,15 @@ export const createComment = catchAsync(async (req: Request, res: Response) => {
     return;
   }
 
-  // Validate parentId if replying
   if (parentId) {
-    const parent = await prisma.comment.findUnique({ where: { id: parentId } });
+    const parent = await commentModel.findUnique({ where: { id: parentId } });
     if (!parent || parent.ideaId !== ideaId) {
       res.status(400).json({ message: "Invalid parent comment" });
       return;
     }
   }
 
-  const comment = await prisma.comment.create({
+  const comment = await commentModel.create({
     data: {
       content: content.trim(),
       authorId: req.user!.id,
@@ -69,11 +69,10 @@ export const createComment = catchAsync(async (req: Request, res: Response) => {
   res.status(201).json(comment);
 });
 
-// DELETE /comments/:id — user deletes own comment, admin deletes any
 export const deleteComment = catchAsync(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
 
-  const comment = await prisma.comment.findUnique({ where: { id } });
+  const comment = await commentModel.findUnique({ where: { id } });
   if (!comment) {
     res.status(404).json({ message: "Comment not found" });
     return;
@@ -87,6 +86,6 @@ export const deleteComment = catchAsync(async (req: Request, res: Response) => {
     return;
   }
 
-  await prisma.comment.delete({ where: { id } });
+  await commentModel.delete({ where: { id } });
   res.json({ message: "Comment deleted" });
 });

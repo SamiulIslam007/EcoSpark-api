@@ -50,13 +50,9 @@ export const getApprovedIdeas = catchAsync(async (req: Request, res: Response) =
     skip,
     take: Number(limit),
     orderBy,
-    select: {
-      ...ideaPublicSelect,
-      _count: { select: { votes: true, comments: true } },
-    },
+    select: ideaPublicSelect,
   });
 
-  // Filter by minimum upvote count if provided
   if (minVotes) {
     const min = Number(minVotes);
     const ideaIds = ideas.map((i) => i.id);

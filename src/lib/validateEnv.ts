@@ -16,5 +16,5 @@ export const validateEnv = () => {
     );
   }
 
-  console.log("✅ Environment variables validated");
+  console.log("Environment variables validated successfully");
 };

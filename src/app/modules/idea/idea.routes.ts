@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { IdeaController } from "./idea.controller";
-import { protect } from "../../middlewares/auth.middleware";
-import { adminOnly } from "../../middlewares/adminOnly.middleware";
-import { upload } from "../../middlewares/upload.middleware";
+import { IdeaController } from "./idea.controller.js";
+import { protect } from "../../middlewares/auth.middleware.js";
+import { adminOnly } from "../../middlewares/adminOnly.middleware.js";
+import { upload } from "../../middlewares/upload.middleware.js";
 
 const router = Router();
 

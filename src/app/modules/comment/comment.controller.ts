@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { catchAsync } from "../../utils/catchAsync";
-import { CommentService } from "./comment.service";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { CommentService } from "./comment.service.js";
 
 const getComments = catchAsync(async (req: Request, res: Response) => {
   const comments = await CommentService.getComments(req.params["ideaId"] as string);

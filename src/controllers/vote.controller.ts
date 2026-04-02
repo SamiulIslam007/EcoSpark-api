@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { catchAsync } from "../lib/catchAsync";
-import { prisma } from "../lib/prisma";
+import { catchAsync } from "../lib/catchAsync.js";
+import { prisma } from "../lib/prisma.js";
 
 export const castVote = catchAsync(async (req: Request, res: Response) => {
   const ideaId = req.params["ideaId"] as string;

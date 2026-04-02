@@ -10,9 +10,9 @@ import {
   rejectIdea,
   getMyIdeas,
   getAllIdeasAdmin,
-} from "../controllers/idea.controller";
-import { protect } from "../middlewares/protect.middleware";
-import { adminOnly } from "../middlewares/adminOnly.middleware";
+} from "../controllers/idea.controller.js";
+import { protect } from "../middlewares/protect.middleware.js";
+import { adminOnly } from "../middlewares/adminOnly.middleware.js";
 
 const router = Router();
 

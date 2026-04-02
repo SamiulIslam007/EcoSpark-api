@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { createCheckoutSession, stripeWebhook, checkPurchaseStatus } from "../controllers/payment.controller";
-import { protect } from "../middlewares/protect.middleware";
+import { createCheckoutSession, stripeWebhook, checkPurchaseStatus } from "../controllers/payment.controller.js";
+import { protect } from "../middlewares/protect.middleware.js";
 
 const router = Router();
 

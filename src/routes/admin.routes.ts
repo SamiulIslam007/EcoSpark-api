@@ -6,9 +6,9 @@ import {
   getDashboardStats,
   subscribeNewsletter,
   adminDeleteIdea,
-} from "../controllers/admin.controller";
-import { protect } from "../middlewares/protect.middleware";
-import { adminOnly } from "../middlewares/adminOnly.middleware";
+} from "../controllers/admin.controller.js";
+import { protect } from "../middlewares/protect.middleware.js";
+import { adminOnly } from "../middlewares/adminOnly.middleware.js";
 
 const router = Router();
 

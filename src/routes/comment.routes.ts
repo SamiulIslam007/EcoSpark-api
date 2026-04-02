@@ -3,8 +3,8 @@ import {
   getComments,
   createComment,
   deleteComment,
-} from "../controllers/comment.controller";
-import { protect } from "../middlewares/protect.middleware";
+} from "../controllers/comment.controller.js";
+import { protect } from "../middlewares/protect.middleware.js";
 
 const router = Router();
 

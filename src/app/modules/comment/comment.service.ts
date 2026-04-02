@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prisma } from "../../utils/prisma";
+import { prisma } from "../../utils/prisma.js";
 
 const commentModel = (prisma as any).comment;
 

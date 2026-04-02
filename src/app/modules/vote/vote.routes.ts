@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { VoteController } from "./vote.controller";
-import { protect } from "../../middlewares/auth.middleware";
+import { VoteController } from "./vote.controller.js";
+import { protect } from "../../middlewares/auth.middleware.js";
 
 const router = Router();
 

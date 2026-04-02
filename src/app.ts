@@ -6,10 +6,10 @@ import express, { Application, Request, Response } from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import qs from "qs";
-import { auth } from "./app/config/index";
-import { globalErrorHandler } from "./app/middlewares/globalError.middleware";
-import { notFound } from "./app/middlewares/notFound.middleware";
-import { IndexRoutes } from "./app/routes/index";
+import { auth } from "./app/config/index.js";
+import { globalErrorHandler } from "./app/middlewares/globalError.middleware.js";
+import { notFound } from "./app/middlewares/notFound.middleware.js";
+import { IndexRoutes } from "./app/routes/index.js";
 
 const app: Application = express();
 

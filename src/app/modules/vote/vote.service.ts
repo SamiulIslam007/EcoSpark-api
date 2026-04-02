@@ -1,4 +1,4 @@
-import { prisma } from "../../utils/prisma";
+import { prisma } from "../../utils/prisma.js";
 
 const castVote = async (ideaId: string, userId: string, type: "UPVOTE" | "DOWNVOTE") => {
   const idea = await prisma.idea.findUnique({ where: { id: ideaId } });

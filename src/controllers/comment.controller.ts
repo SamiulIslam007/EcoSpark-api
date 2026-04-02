@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
-import { catchAsync } from "../lib/catchAsync";
-import { prisma } from "../lib/prisma";
+import { catchAsync } from "../lib/catchAsync.js";
+import { prisma } from "../lib/prisma.js";
 
 const commentModel = (prisma as any).comment;
 

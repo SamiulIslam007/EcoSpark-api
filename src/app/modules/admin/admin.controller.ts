@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { catchAsync } from "../../utils/catchAsync";
-import { AdminService } from "./admin.service";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { AdminService } from "./admin.service.js";
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const result = await AdminService.getAllUsers(req.query as Record<string, string>);

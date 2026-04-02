@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prisma } from "../../utils/prisma";
+import { prisma } from "../../utils/prisma.js";
 
 const getAllUsers = async (query: { page?: string; limit?: string; search?: string }) => {
   const { page = "1", limit = "20", search } = query;

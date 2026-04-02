@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Stripe from "stripe";
-import { catchAsync } from "../lib/catchAsync";
-import { prisma } from "../lib/prisma";
+import { catchAsync } from "../lib/catchAsync.js";
+import { prisma } from "../lib/prisma.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-03-25.dahlia",

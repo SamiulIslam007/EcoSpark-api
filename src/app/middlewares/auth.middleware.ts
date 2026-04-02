@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, NextFunction } from "express";
 import { fromNodeHeaders } from "better-auth/node";
-import { auth } from "../config/index";
+import { auth } from "../config/index.js";
 
 export const protect = async (req: Request, res: Response, next: NextFunction) => {
   const session = await auth.api.getSession({

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { catchAsync } from "../../utils/catchAsync";
-import { IdeaService } from "./idea.service";
-import { IGetIdeasQuery } from "./idea.interface";
-import { uploadToCloudinary } from "../../utils/cloudinary";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { IdeaService } from "./idea.service.js";
+import { IGetIdeasQuery } from "./idea.interface.js";
+import { uploadToCloudinary } from "../../utils/cloudinary.js";
 
 const getApprovedIdeas = catchAsync(async (req: Request, res: Response) => {
   const result = await IdeaService.getApprovedIdeas(req.query as IGetIdeasQuery);

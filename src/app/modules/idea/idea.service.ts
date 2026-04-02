@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prisma } from "../../utils/prisma";
-import { ICreateIdeaPayload, IGetIdeasQuery, IUpdateIdeaPayload } from "./idea.interface";
+import { prisma } from "../../utils/prisma.js";
+import { ICreateIdeaPayload, IGetIdeasQuery, IUpdateIdeaPayload } from "./idea.interface.js";
 
 const ideaPublicSelect = {
   id: true,

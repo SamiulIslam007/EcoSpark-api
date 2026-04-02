@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { catchAsync } from "../../utils/catchAsync";
-import { VoteService } from "./vote.service";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { VoteService } from "./vote.service.js";
 
 const castVote = catchAsync(async (req: Request, res: Response) => {
   const ideaId = req.params["ideaId"] as string;

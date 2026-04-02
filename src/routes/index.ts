@@ -1,10 +1,10 @@
 import { Router } from "express";
-import adminRoutes from "./admin.routes";
-import categoryRoutes from "./category.routes";
-import commentRoutes from "./comment.routes";
-import ideaRoutes from "./idea.routes";
-import paymentRoutes from "./payment.routes";
-import voteRoutes from "./vote.routes";
+import adminRoutes from "./admin.routes.js";
+import categoryRoutes from "./category.routes.js";
+import commentRoutes from "./comment.routes.js";
+import ideaRoutes from "./idea.routes.js";
+import paymentRoutes from "./payment.routes.js";
+import voteRoutes from "./vote.routes.js";
 
 const router = Router();
 

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && npm run build",
     "start": "node dist/src/server.js",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",

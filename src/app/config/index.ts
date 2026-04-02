@@ -1,12 +1,17 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { prisma } from "../utils/prisma.js";
+import { prisma } from "../lib/prisma.js";
+import { buildTrustedOrigins, normalizeAppOrigin } from "../utils/trustedOrigins.js";
+
+/** Must match Express mount: `app.all("/api/v1/auth/*splat", ...)` (Express v5). */
+export const AUTH_BASE_PATH = "/api/v1/auth";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   secret: process.env.BETTER_AUTH_SECRET!,
-  baseURL: process.env.BETTER_AUTH_URL!,
-  trustedOrigins: [process.env.CLIENT_URL!],
+  baseURL: normalizeAppOrigin(process.env.BETTER_AUTH_URL!),
+  basePath: AUTH_BASE_PATH,
+  trustedOrigins: buildTrustedOrigins(),
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 6,

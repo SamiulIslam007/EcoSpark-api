@@ -1,6 +1,6 @@
 import "dotenv/config";
 import app from "./app.js";
-import { validateEnv } from "./app/utils/validateEnv.js";
+import { validateEnv } from "./app/config/validateEnv.js";
 
 validateEnv();
 

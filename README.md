@@ -188,7 +188,7 @@ All endpoints are prefixed with `/api/v1`.
 
 ### Authentication
 
-Better Auth handles auth at `/api/auth/*`. See [Better Auth docs](https://better-auth.com/docs) for details on email/password, OAuth, and session management.
+Better Auth handles auth at `/api/v1/auth/*` (same `/api/v1` prefix as the REST API). See [Better Auth docs](https://better-auth.com/docs) for details on email/password, OAuth, and session management.
 
 ---
 
@@ -389,10 +389,10 @@ Client (multipart/form-data)
 EcoSpark uses **Better Auth** for all authentication concerns:
 
 ```
-POST /api/auth/sign-up/email    → Register
-POST /api/auth/sign-in/email    → Login
-POST /api/auth/sign-out         → Logout
-GET  /api/auth/session          → Current session
+POST /api/v1/auth/sign-up/email   → Register
+POST /api/v1/auth/sign-in/email   → Login
+POST /api/v1/auth/sign-out        → Logout
+GET  /api/v1/auth/get-session     → Current session
 ```
 
 Protected routes use the `protect` middleware, which reads the session from the `Authorization` header or session cookie. Admin routes additionally use `adminOnly` middleware.

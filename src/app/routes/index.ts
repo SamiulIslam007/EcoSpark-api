@@ -1,10 +1,10 @@
 import { Router } from "express";
-import adminRoutes from "../modules/admin/admin.routes.js";
-import categoryRoutes from "../modules/category/category.routes.js";
-import commentRoutes from "../modules/comment/comment.routes.js";
-import ideaRoutes from "../modules/idea/idea.routes.js";
-import paymentRoutes from "../modules/payment/payment.routes.js";
-import voteRoutes from "../modules/vote/vote.routes.js";
+import adminRoutes from "../module/admin/admin.route.js";
+import categoryRoutes from "../module/category/category.route.js";
+import commentRoutes from "../module/comment/comment.route.js";
+import ideaRoutes from "../module/idea/idea.route.js";
+import paymentRoutes from "../module/payment/payment.route.js";
+import voteRoutes from "../module/vote/vote.route.js";
 
 const router = Router();
 

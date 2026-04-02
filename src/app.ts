@@ -6,9 +6,10 @@ import express, { Application, Request, Response } from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import qs from "qs";
-import { auth } from "./app/config/index.js";
-import { globalErrorHandler } from "./app/middlewares/globalError.middleware.js";
-import { notFound } from "./app/middlewares/notFound.middleware.js";
+import { auth, AUTH_BASE_PATH } from "./app/config/index.js";
+import { buildCorsOrigins } from "./app/utils/trustedOrigins.js";
+import { globalErrorHandler } from "./app/middleware/globalError.middleware.js";
+import { notFound } from "./app/middleware/notFound.middleware.js";
 import { IndexRoutes } from "./app/routes/index.js";
 
 const app: Application = express();
@@ -20,15 +21,10 @@ app.set("query parser", (str: string) => qs.parse(str));
 app.use(helmet());
 app.use(morgan("dev"));
 
-// CORS
+// CORS (aligned with Better Auth trustedOrigins + API host)
 app.use(
   cors({
-    origin: [
-      process.env.CLIENT_URL!,
-      process.env.BETTER_AUTH_URL!,
-      "http://localhost:3000",
-      "http://localhost:5000",
-    ],
+    origin: buildCorsOrigins(),
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -38,8 +34,8 @@ app.use(
 // Stripe webhook — must be BEFORE express.json() to get raw body
 app.post("/api/v1/payments/webhook", express.raw({ type: "application/json" }));
 
-// Better Auth — handles all /api/auth/* routes
-app.all("/api/auth/{*path}", toNodeHandler(auth));
+// Better Auth — Express v5 needs `*splat` (not `{*path}`). See better-auth.com/docs/integrations/express
+app.all(`${AUTH_BASE_PATH}/*splat`, toNodeHandler(auth));
 
 // Body parsers
 app.use(express.json());

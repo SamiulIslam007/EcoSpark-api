@@ -25,15 +25,24 @@ const getApprovedIdeas = async (query: IGetIdeasQuery) => {
     search,
     isPaid,
     authorId,
+    author,
     minVotes,
   } = query;
 
   const skip = (Number(page) - 1) * Number(limit);
+  const take = Number(limit);
 
   const where: any = { status: "APPROVED" };
   if (category) where.categoryId = category;
-  if (isPaid !== undefined) where.isPaid = isPaid === "true";
+  if (isPaid === "true" || isPaid === "false") {
+    where.isPaid = isPaid === "true";
+  }
   if (authorId) where.authorId = authorId;
+  if (author?.trim()) {
+    where.author = {
+      name: { contains: author.trim(), mode: "insensitive" },
+    };
+  }
   if (search) {
     where.OR = [
       { title: { contains: search, mode: "insensitive" } },
@@ -41,32 +50,47 @@ const getApprovedIdeas = async (query: IGetIdeasQuery) => {
     ];
   }
 
-  const orderBy: any =
-    sort === "top_voted" ? { votes: { _count: "desc" } } : { createdAt: "desc" };
-
-  let ideas = await prisma.idea.findMany({
-    where,
-    skip,
-    take: Number(limit),
-    orderBy,
-    select: ideaPublicSelect,
-  });
-
-  if (minVotes) {
+  if (minVotes && Number(minVotes) > 0) {
     const min = Number(minVotes);
-    const ideaIds = ideas.map((i) => i.id);
-    const voteCounts = await prisma.vote.groupBy({
+    const baseMatches = await prisma.idea.findMany({ where, select: { id: true } });
+    const baseIds = baseMatches.map((i) => i.id);
+    if (baseIds.length === 0) {
+      return { ideas: [], total: 0, page: Number(page), totalPages: 0 };
+    }
+    const groups = await prisma.vote.groupBy({
       by: ["ideaId"],
-      where: { ideaId: { in: ideaIds }, type: "UPVOTE" },
-      _count: { ideaId: true },
+      where: { type: "UPVOTE", ideaId: { in: baseIds } },
+      _count: true,
     });
-    const countMap = new Map(voteCounts.map((v) => [v.ideaId, v._count.ideaId]));
-    ideas = ideas.filter((i) => (countMap.get(i.id) ?? 0) >= min);
+    const eligibleIds = groups.filter((g) => Number(g._count) >= min).map((g) => g.ideaId);
+    if (eligibleIds.length === 0) {
+      return { ideas: [], total: 0, page: Number(page), totalPages: 0 };
+    }
+    where.id = { in: eligibleIds };
   }
 
-  const total = await prisma.idea.count({ where });
+  let orderBy: any = { createdAt: "desc" };
+  if (sort === "top_voted") orderBy = { votes: { _count: "desc" } };
+  else if (sort === "most_commented") orderBy = { comments: { _count: "desc" } };
+  else if (sort === "oldest") orderBy = { createdAt: "asc" };
 
-  return { ideas, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) };
+  const [ideas, total] = await Promise.all([
+    prisma.idea.findMany({
+      where,
+      skip,
+      take,
+      orderBy,
+      select: ideaPublicSelect,
+    }),
+    prisma.idea.count({ where }),
+  ]);
+
+  return {
+    ideas,
+    total,
+    page: Number(page),
+    totalPages: Math.ceil(total / take) || 0,
+  };
 };
 
 const getIdeaById = async (id: string, userId?: string, userRole?: string) => {

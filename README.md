@@ -349,21 +349,33 @@ npx ts-node --esm prisma/seed.ts
 | Resource               | Count | Notes                                                             |
 | ---------------------- | ----- | ----------------------------------------------------------------- |
 | Categories             | 8     | Renewable Energy, Waste Reduction, Sustainable Agriculture, etc.  |
-| Users                  | 5     | 1 admin (`admin@ecospark.io`) + 4 members                         |
+| Users                  | 5     | 1 admin (`admin@admin.com`) + 4 members                           |
 | Ideas                  | 12    | Mix of free & paid, approved/draft/rejected, with Unsplash images |
 | Votes                  | ~20   | Distributed across approved ideas                                 |
 | Comments               | 6     | Contextual sustainability discussions                             |
 | Newsletter subscribers | 3     | —                                                                 |
 
 
-**Default admin credentials:**
+**Admin credentials** (for demo / testing after seed):
 
-```
-Email: admin@ecospark.io
-Password: Admin@123
+```json
+{
+  "name": "Admin",
+  "email": "admin@admin.com",
+  "password": "Admin123"
+}
 ```
 
-> The seed uses idempotent upserts — safe to run multiple times without creating duplicates.
+**Member credentials** (demo member after seed):
+
+```json
+{
+  "email": "samiul@gmail.com",
+  "password": "Samiul123"
+}
+```
+
+> The seed uses idempotent upserts — safe to run multiple times without creating duplicates. Other seeded members use password `Password123!` (see console output after `npm run db:seed`).
 
 ---
 

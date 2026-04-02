@@ -4,8 +4,8 @@
  * Populates the database with realistic demo data including:
  * - 1 admin user  +  4 member users
  * - 8 sustainability categories
- * - 12 approved ideas (with real Unsplash images)
- * - 2 paid ideas, 2 draft ideas
+ * - 22 ideas total: 20 approved (incl. 2 paid), 1 under review, 1 draft
+ * - Unsplash image URLs on ideas
  * - Votes and comments on several ideas
  *
  * Run with:  npm run db:seed
@@ -32,7 +32,7 @@ const UNSPLASH = {
   solar: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&q=80",
   wind: "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=800&q=80",
   compost: "https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=800&q=80",
-  recycling: "https://images.unsplash.com/photo-1532996122724-e3c0b70c4a91?w=800&q=80",
+  recycling: "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=800&q=80",
   ev: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
   cycling: "https://images.unsplash.com/photo-1502744688674-c619d1586c9e?w=800&q=80",
   water: "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=800&q=80",
@@ -43,7 +43,7 @@ const UNSPLASH = {
   ocean: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&q=80",
   plant: "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=800&q=80",
   lab: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&q=80",
-  bee: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&q=80",
+  bee: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&q=80",
   panel: "https://images.unsplash.com/photo-1460472178825-e5240623afd5?w=800&q=80",
 };
 
@@ -80,14 +80,18 @@ async function main() {
 
   // ── 2. Users ───────────────────────────────────────────────────────────────
   // We create auth Account rows manually so passwords work with better-auth.
-  // For demo purposes we store a fixed bcrypt hash of "Password123!"
-  // (generated offline). In production, always use auth.api.signUp().
+  // For demo purposes we store fixed bcrypt hashes (generated offline).
+  // In production, always use auth.api.signUp().
+  const ADMIN_PASSWORD_HASH =
+    "$2b$10$Pso09kuEh8gYKWNkhdzpgOr9WZOTIsQmcaqIr47EOxWeXGbvWrwXC"; // Admin123
+  const SAMIUL_PASSWORD_HASH =
+    "$2b$10$QR0q0XnXfKm1JRzL18GQA..GKmfXB/OtxtvXYF8bnt1g46MD5M/jO"; // Samiul123
   const DEMO_PASSWORD_HASH =
     "$2b$10$K7L1OJ45/4Y2nIvhRVpCe.ZYPJMr/6Qj1kFsB2.8o9GgDVHOEoT9q"; // Password123!
 
   const usersData = [
-    { name: "Alex Rahman", email: "admin@ecospark.dev", role: "ADMIN" as const },
-    { name: "Priya Sen", email: "priya@example.com", role: "MEMBER" as const },
+    { name: "Admin", email: "admin@admin.com", role: "ADMIN" as const },
+    { name: "Samiul", email: "samiul@gmail.com", role: "MEMBER" as const },
     { name: "James Okafor", email: "james@example.com", role: "MEMBER" as const },
     { name: "Sofia Müller", email: "sofia@example.com", role: "MEMBER" as const },
     { name: "Liam Chen", email: "liam@example.com", role: "MEMBER" as const },
@@ -108,6 +112,13 @@ async function main() {
         },
       });
 
+      const passwordHash =
+        u.role === "ADMIN"
+          ? ADMIN_PASSWORD_HASH
+          : u.email === "samiul@gmail.com"
+            ? SAMIUL_PASSWORD_HASH
+            : DEMO_PASSWORD_HASH;
+
       // Create a password-based account for better-auth
       await prisma.account.upsert({
         where: {
@@ -121,7 +132,7 @@ async function main() {
           accountId: user.id,
           providerId: "credential",
           userId: user.id,
-          password: DEMO_PASSWORD_HASH,
+          password: passwordHash,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -132,7 +143,7 @@ async function main() {
   );
 
   const admin = users[0];
-  const [, priya, james, sofia, liam] = users;
+  const [, samiul, james, sofia, liam] = users;
   console.log(`✅ Created ${users.length} users (admin + 4 members)`);
 
   // ── 3. Ideas ───────────────────────────────────────────────────────────────
@@ -149,7 +160,7 @@ async function main() {
       images: [UNSPLASH.solar, UNSPLASH.panel],
       isPaid: false,
       status: "APPROVED" as const,
-      authorId: priya.id,
+      authorId: samiul.id,
       categoryId: catMap["Energy"],
     },
     {
@@ -205,7 +216,7 @@ async function main() {
       images: [UNSPLASH.farm, UNSPLASH.forest],
       isPaid: false,
       status: "APPROVED" as const,
-      authorId: priya.id,
+      authorId: samiul.id,
       categoryId: catMap["Agriculture"],
     },
     {
@@ -263,7 +274,7 @@ async function main() {
       isPaid: true,
       price: 12.99,
       status: "APPROVED" as const,
-      authorId: priya.id,
+      authorId: samiul.id,
       categoryId: catMap["Water Conservation"],
     },
     {
@@ -311,6 +322,147 @@ async function main() {
       authorId: liam.id,
       categoryId: catMap["Urban Planning"],
     },
+    // ── 10 additional APPROVED ideas (EcoSpark demo) ─────────────────────────
+    {
+      title: "Regenerative Grazing on Marginal Grasslands",
+      problemStatement:
+        "Overgrazed marginal lands lose topsoil and store less carbon, while livestock farmers face pressure to reduce emissions without losing livelihoods.",
+      proposedSolution:
+        "Rotate cattle through small paddocks with long rest periods so grasses recover deeply, rebuild soil organic matter, and sequester carbon while improving carrying capacity.",
+      description:
+        "Regenerative grazing mimics herd movement on natural savannas. Farmers track forage height with simple apps and move fences every few days. Pilot programmes show 20–35% more grass biomass within three years and measurable soil carbon gains. Extension officers train cohorts regionally.",
+      images: [UNSPLASH.farm, UNSPLASH.forest],
+      isPaid: false,
+      status: "APPROVED" as const,
+      authorId: samiul.id,
+      categoryId: catMap["Agriculture"],
+    },
+    {
+      title: "Vertical Farming Inside Refurbished Containers",
+      problemStatement:
+        "Cities import leafy greens from distant farms, wasting water and fuel, while vacant industrial lots sit unused near consumers.",
+      proposedSolution:
+        "Stack hydroponic growing systems inside insulated shipping containers with LED spectra tuned per crop, placed on under-used urban plots.",
+      description:
+        "Each container produces roughly 400–600 heads of lettuce per month year-round. Solar panels on the roof offset grid draw. Operators sell via subscription boxes and restaurants within a 5 km radius, cutting food miles dramatically. Used containers are cheaper than new greenhouse steel.",
+      images: [UNSPLASH.plant, UNSPLASH.city],
+      isPaid: false,
+      status: "APPROVED" as const,
+      authorId: james.id,
+      categoryId: catMap["Urban Planning"],
+    },
+    {
+      title: "Carbon-Storing Additives for Ordinary Concrete",
+      problemStatement:
+        "Cement production alone accounts for roughly 8% of global CO₂ emissions, yet demand for concrete keeps rising for housing and infrastructure.",
+      proposedSolution:
+        "Blend finely ground olivine or biochar-based pozzolans into standard mixes to chemically lock CO₂ while meeting structural codes.",
+      description:
+        "Carbon mineralisation in concrete is an active research field. This proposal focuses on additives that can be batched at existing ready-mix plants with minimal retooling. Life-cycle analysis shows 15–25% embodied carbon reduction when paired with lower-clinker cement. Pilot slabs are monitored for strength and durability.",
+      images: [UNSPLASH.city, UNSPLASH.panel],
+      isPaid: false,
+      status: "APPROVED" as const,
+      authorId: sofia.id,
+      categoryId: catMap["Energy"],
+    },
+    {
+      title: "Battery Swapping Hubs for Electric Two-Wheelers",
+      problemStatement:
+        "Delivery riders and commuters hesitate to buy electric scooters because charging takes hours and battery degradation is opaque.",
+      proposedSolution:
+        "Deploy neighbourhood swap cabinets where users exchange a depleted pack for a charged one in under a minute, paying per kilometre.",
+      description:
+        "Standardised battery form factors and IoT state-of-health tracking make swaps safe. The network operator owns the batteries, lowering upfront vehicle cost. Cities grant curb space for hubs near transit. Data helps plan grid upgrades and incentives for night-time charging on renewables.",
+      images: [UNSPLASH.ev, UNSPLASH.cycling],
+      isPaid: false,
+      status: "APPROVED" as const,
+      authorId: liam.id,
+      categoryId: catMap["Transportation"],
+    },
+    {
+      title: "Biogas Digesters at Wholesale Food Markets",
+      problemStatement:
+        "Wholesale markets discard tonnes of organic waste daily, creating methane in landfills and odour complaints in dense districts.",
+      proposedSolution:
+        "Install medium-scale anaerobic digesters on-site to turn trimmings and spoiled produce into biogas for cooking stalls and electricity.",
+      description:
+        "Digestate becomes compost for nearby urban farms. Vendors pay a small tipping fee instead of hauling waste. A 2 MW equivalent cluster can serve a market serving 50,000 people. Carbon credits and reduced grid purchases improve payback to under seven years.",
+      images: [UNSPLASH.compost, UNSPLASH.farm],
+      isPaid: false,
+      status: "APPROVED" as const,
+      authorId: samiul.id,
+      categoryId: catMap["Waste Management"],
+    },
+    {
+      title: "Green Roof Grants for Chain Store Rooftops",
+      problemStatement:
+        "Big-box retail roofs are vast, heat-absorbing, and rarely used, worsening urban heat islands and stormwater runoff.",
+      proposedSolution:
+        "Public–private grants covering 40% of installation cost if retailers commit to native plant mixes and public stormwater reporting.",
+      description:
+        "Aggregating hundreds of hectares of green roofs measurably lowers peak summer temperatures and delays sewer overflows. Chains gain branding and lower HVAC bills. Municipalities use satellite and drone surveys to verify green cover and tie incentives to biodiversity scores.",
+      images: [UNSPLASH.city, UNSPLASH.plant],
+      isPaid: false,
+      status: "APPROVED" as const,
+      authorId: james.id,
+      categoryId: catMap["Urban Planning"],
+    },
+    {
+      title: "Low-Tech Coral Nursery Frames for Reef Edges",
+      problemStatement:
+        "Coral reefs bleach faster than large-scale tourism projects can fund high-tech restoration, especially in remote islands.",
+      proposedSolution:
+        "Train coastal communities to weld rebar and limestone frames that stabilise rubble fields so naturally spawned larvae can settle.",
+      description:
+        "Unlike expensive offshore nurseries, these frames cost little and use local materials. Combined with temporary algae removal and no-take zones, recovery rates improve within two spawning seasons. Monitoring uses snorkel surveys and phone photos to keep science participatory.",
+      images: [UNSPLASH.ocean, UNSPLASH.water],
+      isPaid: false,
+      status: "APPROVED" as const,
+      authorId: sofia.id,
+      categoryId: catMap["Marine & Ocean"],
+    },
+    {
+      title: "Wildflower Strips Along Highway Exits",
+      problemStatement:
+        "Mown highway verges are ecological deserts that offer no food for pollinators and require costly repeated mowing.",
+      proposedSolution:
+        "Replace 30% of verge length with native wildflower seed mixes cut only once per year after seed drop.",
+      description:
+        "Departments of transport save fuel on mowing while supporting bees and butterflies. Crash sightlines are preserved in safety zones. Partnerships with seed cooperatives keep costs low. Public awareness signs explain the programme to reduce complaints about ‘untidy’ roadsides.",
+      images: [UNSPLASH.bee, UNSPLASH.forest],
+      isPaid: false,
+      status: "APPROVED" as const,
+      authorId: liam.id,
+      categoryId: catMap["Biodiversity"],
+    },
+    {
+      title: "Bulk Refill Kiosks at Major Transit Hubs",
+      problemStatement:
+        "Commuters buy single-use plastic bottles because refill options are absent where they transfer between trains and buses.",
+      proposedSolution:
+        "Install filtered-water and detergent refill kiosks in station concourses, priced below bottled water to drive adoption.",
+      description:
+        "Operators partner with ethical household brands for gravity-fed bulk liquids (soap, shampoo). RFID bottles link to loyalty discounts. Foot traffic data from transit authorities picks kiosk sites. Plastic bottle sales in pilot stations dropped 18% in the first year.",
+      images: [UNSPLASH.water, UNSPLASH.recycling],
+      isPaid: false,
+      status: "APPROVED" as const,
+      authorId: samiul.id,
+      categoryId: catMap["Water Conservation"],
+    },
+    {
+      title: "Small Tidal Lagoons for Island Micro-Grids",
+      problemStatement:
+        "Remote islands burn imported diesel for electricity at high cost and emissions despite having strong tidal resources.",
+      proposedSolution:
+        "Build modest impoundment lagoons with one-way turbines that generate on both flood and ebb tides, sized for village-scale demand.",
+      description:
+        "Unlike massive barrages, lagoon schemes disturb less habitat and can be phased. Combined with battery storage and rooftop solar, islands achieve 70%+ renewable share. Economic modelling uses local wage rates and shipping costs for diesel to show favourable levelised cost after year twelve.",
+      images: [UNSPLASH.ocean, UNSPLASH.wind],
+      isPaid: false,
+      status: "APPROVED" as const,
+      authorId: james.id,
+      categoryId: catMap["Energy"],
+    },
   ];
 
   const ideas = await Promise.all(
@@ -339,7 +491,7 @@ async function main() {
 
   // ── 4. Votes ───────────────────────────────────────────────────────────────
   const approvedIdeas = ideas.filter((i) => i.status === "APPROVED");
-  const voters = [priya, james, sofia, liam, admin];
+  const voters = [samiul, james, sofia, liam, admin];
   const voteTypes = ["UPVOTE", "UPVOTE", "UPVOTE", "DOWNVOTE", "UPVOTE"] as const;
 
   let voteCount = 0;
@@ -385,7 +537,7 @@ async function main() {
     },
     {
       ideaId: approvedIdeas[3].id,
-      authorId: priya.id,
+      authorId: samiul.id,
       content: "Greywater recycling is hugely underrated. In Singapore they've been doing this for decades. The biggest barrier in most cities is retrofitting costs and plumbing code resistance.",
     },
     {
@@ -426,9 +578,10 @@ async function main() {
   console.log(`✅ Created ${newsletters.length} newsletter subscribers`);
 
   console.log("\n🎉 Seed complete!\n");
-  console.log("Demo credentials (password for all accounts: Password123!):");
-  console.log("  Admin : admin@ecospark.dev");
-  console.log("  Member: priya@example.com");
+  console.log("Demo credentials:");
+  console.log("  Admin  : admin@admin.com  /  Admin123");
+  console.log("  Member : samiul@gmail.com  /  Samiul123");
+  console.log("  Members (Password123!):");
   console.log("  Member: james@example.com");
   console.log("  Member: sofia@example.com");
   console.log("  Member: liam@example.com");

@@ -29,5 +29,7 @@ export interface IGetIdeasQuery {
   search?: string;
   isPaid?: string;
   authorId?: string;
+  /** Partial match on author display name (from /ideas filters) */
+  author?: string;
   minVotes?: string;
 }

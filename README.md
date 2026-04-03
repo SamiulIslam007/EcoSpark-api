@@ -1,106 +1,361 @@
+<div align="center">
 
+# 🌿 EcoSpark Hub — Backend API
 
-# 🌿 EcoSpark Hub — API
+**RESTful API powering the EcoSpark Hub sustainability ideas platform.**
 
-**A community-driven platform for sharing and funding sustainability ideas**
+[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=node.js)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Express](https://img.shields.io/badge/Express-5.0-000000?style=for-the-badge&logo=express)](https://expressjs.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-7.0-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![Stripe](https://img.shields.io/badge/Stripe-21.0-635BFF?style=for-the-badge&logo=stripe)](https://stripe.com/)
+[![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-000000?style=for-the-badge&logo=vercel)](https://vercel.com/)
 
-[TypeScript](https://www.typescriptlang.org/)
-[Node.js](https://nodejs.org/)
-[Express](https://expressjs.com/)
-[Prisma](https://www.prisma.io/)
-[PostgreSQL](https://www.postgresql.org/)
-[Vercel](https://vercel.com/)
+[🌐 Live API](https://ecospark-api.vercel.app) · [🖥 Frontend Repo](../ecospark-web) · [📋 Report Bug](#)
 
-
-
----
-
-## 📖 Overview
-
-EcoSpark Hub is a RESTful API backend that powers a sustainability idea-sharing platform. Users can post eco-friendly ideas, vote and comment on them, and purchase premium content. An admin workflow handles idea moderation — from draft through review, approval or rejection.
-
-Key capabilities:
-
-- **Authentication** via [Better Auth](https://better-auth.com) (sessions, OAuth, email/password)
-- **Idea lifecycle** — draft → under review → approved/rejected
-- **Paid ideas** — Stripe-powered purchases with webhook verification
-- **Media uploads** — Multer (memory) → Cloudinary pipeline
-- **Voting & commenting** — per-idea community engagement
-- **Admin dashboard** — full content moderation with feedback
+</div>
 
 ---
 
-## 🏗️ Architecture
+## 📖 Table of Contents
+
+- [About](#-about)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Database Schema](#-database-schema)
+- [API Reference](#-api-reference)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [Available Scripts](#-available-scripts)
+- [Authentication](#-authentication)
+- [Payment Flow](#-payment-flow)
+- [Image Uploads](#-image-uploads)
+- [Deployment](#-deployment)
+
+---
+
+## 🌱 About
+
+EcoSpark API is the Express 5 backend for EcoSpark Hub. It provides:
+
+- **Full CRUD** for sustainability ideas with a multi-stage review workflow
+- **Session-based authentication** via Better Auth with PostgreSQL session storage
+- **Stripe-powered payments** for monetised ideas (checkout + webhook)
+- **Cloudinary image uploads** streamed from server memory via Multer
+- **Threaded comments** with nested replies (up to 3 levels)
+- **Role-based access control** — `MEMBER` and `ADMIN` roles
+- **Admin moderation** — approve/reject ideas, manage users and categories
+
+---
+
+## 🛠 Tech Stack
+
+| Category | Technology |
+|---|---|
+| **Runtime** | [Node.js 20+](https://nodejs.org/) |
+| **Language** | [TypeScript 5](https://www.typescriptlang.org/) (ESM) |
+| **Framework** | [Express 5](https://expressjs.com/) |
+| **ORM** | [Prisma 7](https://www.prisma.io/) with `@prisma/adapter-pg` |
+| **Database** | [PostgreSQL 15+](https://www.postgresql.org/) |
+| **Authentication** | [Better Auth 1.5.6](https://www.better-auth.com/) (email/password + sessions) |
+| **Payments** | [Stripe 21.0](https://stripe.com/) (Checkout Sessions + Webhooks) |
+| **File Upload** | [Multer 1.4](https://github.com/expressjs/multer) (memory storage) → [Cloudinary 2.6](https://cloudinary.com/) |
+| **Security** | [Helmet 8.1](https://helmetjs.github.io/), [CORS 2.8](https://github.com/expressjs/cors) |
+| **Logging** | [Morgan 1.10](https://github.com/expressjs/morgan) |
+| **Deployment** | [Vercel](https://vercel.com/) (serverless via `@vercel/node`) |
+
+---
+
+## 📁 Project Structure
 
 ```
-src/
-├── app/
-│   ├── config/          # better-auth setup, environment config
-│   ├── errors/          # AppError, global error handler
-│   ├── interfaces/      # Shared TypeScript interfaces
-│   ├── middlewares/     # auth guard, admin guard, upload, error handler
-│   ├── modules/         # Feature modules (controller → service → Prisma)
-│   │   ├── admin/
-│   │   ├── category/
-│   │   ├── comment/
-│   │   ├── idea/
-│   │   ├── payment/
-│   │   └── vote/
-│   ├── routes/          # Central route aggregator
-│   └── utils/           # catchAsync, sendResponse, cloudinary, validateEnv
-├── app.ts               # Express app bootstrap
-└── server.ts            # Entry point (local dev)
-prisma/
-├── schema.prisma        # Database schema
-└── seed.ts              # Realistic seed data (12 ideas, 5 users, categories)
-```
-
-Each module follows the layered pattern:
-
-```
-idea.routes.ts  →  idea.controller.ts  →  idea.service.ts  →  Prisma
+ecospart-api/
+├── src/
+│   ├── server.ts                    # Entry point (local dev)
+│   ├── app.ts                       # Express app bootstrap (CORS, middleware, routes)
+│   └── app/
+│       ├── config/
+│       │   ├── index.ts             # Better Auth configuration
+│       │   └── validateEnv.ts       # Startup env validation (throws if missing)
+│       ├── lib/
+│       │   ├── prisma.ts            # Prisma client singleton
+│       │   ├── cloudinary.ts        # Cloudinary upload / delete utilities
+│       │   └── catchAsync.ts        # Async error wrapper (eliminates try/catch boilerplate)
+│       ├── middleware/
+│       │   ├── auth.middleware.ts   # `protect` — validates session, attaches req.user
+│       │   ├── adminOnly.middleware.ts  # `adminOnly` — rejects non-ADMIN
+│       │   ├── upload.middleware.ts # Multer config (5 MB, images only, memory storage)
+│       │   ├── globalError.middleware.ts  # Global error handler
+│       │   └── notFound.middleware.ts     # 404 handler
+│       ├── module/                  # Feature modules (controller / service / route / interface)
+│       │   ├── admin/               # Admin stats, user management, newsletter
+│       │   ├── category/            # Category CRUD
+│       │   ├── comment/             # Threaded comments
+│       │   ├── idea/                # Idea CRUD + status workflow
+│       │   ├── payment/             # Stripe checkout + webhook
+│       │   ├── upload/              # Image upload to Cloudinary
+│       │   └── vote/                # Upvote / downvote
+│       ├── routes/
+│       │   └── index.ts             # Central route aggregator
+│       ├── utils/
+│       │   ├── sendResponse.ts      # Standardised JSON response helper
+│       │   └── trustedOrigins.ts    # CORS origin builder from env
+│       ├── interfaces/
+│       │   └── common.interface.ts
+│       └── errorHelpers/
+│           └── AppError.ts          # Custom error class
+│
+├── prisma/
+│   ├── schema.prisma                # Database schema (all models)
+│   └── seed.ts                      # Demo data seeder
+│
+├── dist/                            # Compiled JavaScript (git-ignored)
+├── vercel.json                      # Vercel deployment config
+├── .env.example                     # Environment variable template
+├── tsconfig.json
+└── package.json
 ```
 
 ---
 
-## ⚙️ Tech Stack
+## 🗄 Database Schema
 
+### Models Overview
 
-| Layer      | Technology                                      |
-| ---------- | ----------------------------------------------- |
-| Runtime    | Node.js 20+                                     |
-| Language   | TypeScript 5 (ESM, `moduleResolution: bundler`) |
-| Framework  | Express 4                                       |
-| ORM        | Prisma 7 with `@prisma/adapter-pg`              |
-| Database   | PostgreSQL 15+ (Neon / Supabase recommended)    |
-| Auth       | Better Auth                                     |
-| Payments   | Stripe (webhooks + checkout)                    |
-| Media      | Cloudinary (upload) + Multer (memory buffer)    |
-| Deployment | Vercel Serverless (`@vercel/node`)              |
+```
+User ──────┬──── ideas    ──── Idea ──┬──── votes    ──── Vote
+           ├──── votes                ├──── comments ──── Comment (nested)
+           ├──── purchases            ├──── purchases──── Purchase
+           ├──── comments             └──── category ──── Category
+           ├──── sessions  (Better Auth)
+           └──── accounts  (Better Auth OAuth)
 
+NewsletterSubscriber (standalone)
+Verification (Better Auth)
+```
+
+### Key Model Details
+
+**`User`**
+```prisma
+id          String   @id
+name        String
+email       String   @unique
+role        Role     @default(MEMBER)   // MEMBER | ADMIN
+isActive    Boolean  @default(true)
+```
+
+**`Idea`**
+```prisma
+id                 String      @id @default(cuid())
+title              String
+problemStatement   String
+proposedSolution   String
+description        String
+images             String[]    // Cloudinary URLs
+isPaid             Boolean     @default(false)
+price              Float?
+status             IdeaStatus  @default(DRAFT)
+                               // DRAFT | UNDER_REVIEW | APPROVED | REJECTED
+rejectionFeedback  String?
+authorId           String      // → User
+categoryId         String      // → Category
+```
+
+**`Vote`** — unique per `[userId, ideaId]`
+```prisma
+type    VoteType  // UPVOTE | DOWNVOTE
+```
+
+**`Comment`** — supports self-referential nesting
+```prisma
+content   String
+parentId  String?  // null = top-level comment
+replies   Comment[]
+```
+
+**`Purchase`** — unique per `[userId, ideaId]`
+```prisma
+stripePaymentId  String?
+```
 
 ---
 
-## 🗄️ Database Schema
+## 📡 API Reference
 
+**Base URL:** `https://ecospark-api.vercel.app/api/v1`
+**Local:** `http://localhost:5000/api/v1`
+
+All responses follow this envelope:
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Ideas retrieved successfully",
+  "data": { ... }
+}
 ```
-User ──< Session
-User ──< Account        (better-auth OAuth accounts)
-User ──< Idea
-User ──< Vote
-User ──< Purchase
-User ──< Comment
 
-Category ──< Idea
-Idea ──< Vote
-Idea ──< Purchase
-Idea ──< Comment
+---
 
-Enums:
-  Role        → MEMBER | ADMIN
-  IdeaStatus  → DRAFT | UNDER_REVIEW | APPROVED | REJECTED
-  VoteType    → UPVOTE | DOWNVOTE
+### 🔐 Authentication
+> Handled by Better Auth. Session cookie is set on `/api/v1/auth/*`.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/auth/sign-up/email` | Register with name, email, password |
+| `POST` | `/auth/sign-in/email` | Login with email, password |
+| `POST` | `/auth/sign-out` | Destroy session |
+| `GET` | `/auth/get-session` | Get current session + user |
+
+---
+
+### 🏷 Categories
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/categories` | — | List all categories |
+| `POST` | `/categories` | Admin | Create a category `{ name }` |
+| `DELETE` | `/categories/:id` | Admin | Delete a category |
+
+---
+
+### 💡 Ideas
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/ideas` | — | List approved ideas |
+| `GET` | `/ideas/:id` | Optional | Get one idea (handles paid gate) |
+| `GET` | `/ideas/my` | Member | Get current user's ideas |
+| `GET` | `/ideas/admin/all` | Admin | Get all ideas (any status) |
+| `POST` | `/ideas` | Member | Create idea (multipart/form-data) |
+| `PATCH` | `/ideas/:id` | Member | Update idea (multipart/form-data) |
+| `DELETE` | `/ideas/:id` | Member | Delete idea (DRAFT only) |
+| `PATCH` | `/ideas/:id/submit` | Member | Submit DRAFT → UNDER_REVIEW |
+| `PATCH` | `/ideas/:id/approve` | Admin | Approve idea → APPROVED |
+| `PATCH` | `/ideas/:id/reject` | Admin | Reject with feedback `{ feedback }` |
+
+**`GET /ideas` — Query Parameters**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `page` | number | Page number (default: `1`) |
+| `limit` | number | Items per page (default: `10`) |
+| `category` | string | Filter by category ID |
+| `search` | string | Search title / description |
+| `sort` | string | `newest` \| `popular` \| `price-asc` \| `price-desc` |
+| `isPaid` | boolean | Filter free / paid ideas |
+
+**`GET /ideas/:id` — Response Shapes**
+
+```jsonc
+// Unauthenticated + paid idea
+{ "requiresAuth": true }
+
+// Authenticated, not yet purchased
+{ "requiresPurchase": true, "price": 9.99, "teaser": { "title": "...", ... } }
+
+// Authenticated + purchased (or free idea, or admin)
+{ "id": "...", "title": "...", /* full idea */ }
 ```
+
+**Create / Update — `multipart/form-data` Fields**
+
+| Field | Type | Required |
+|-------|------|----------|
+| `title` | string | ✅ |
+| `problemStatement` | string | ✅ |
+| `proposedSolution` | string | ✅ |
+| `description` | string | ✅ |
+| `categoryId` | string | ✅ |
+| `isPaid` | boolean | ✅ |
+| `price` | number | Only if `isPaid: true` |
+| `images` | File[] | Up to 4 files, 5 MB each |
+
+---
+
+### 👍 Votes
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/votes/:ideaId` | — | Get all votes for an idea |
+| `POST` | `/votes/:ideaId` | Member | Cast / change / remove vote |
+
+**`POST /votes/:ideaId`** body: `{ "type": "UPVOTE" | "DOWNVOTE" }`
+
+- Voting the same type again **removes** the vote (toggle)
+- Voting a different type **updates** the existing vote
+- Returns `201 Created` for new vote, `200 OK` for removal
+
+---
+
+### 💬 Comments
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/comments/:ideaId` | — | Get nested comment tree |
+| `POST` | `/comments/:ideaId` | Member | Post a comment or reply |
+| `DELETE` | `/comments/:id` | Member/Admin | Delete a comment |
+
+**`POST /comments/:ideaId`** body:
+```json
+{ "content": "Great idea!", "parentId": "optional-parent-id" }
+```
+
+---
+
+### 💳 Payments
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/payments/checkout` | Member | Create Stripe Checkout Session |
+| `GET` | `/payments/status/:ideaId` | Member | Check purchase status |
+| `POST` | `/payments/webhook` | — (Stripe) | Handle `checkout.session.completed` |
+
+**`POST /payments/checkout`** body: `{ "ideaId": "..." }`
+Returns: `{ "url": "https://checkout.stripe.com/..." }`
+
+After successful payment, Stripe redirects to:
+`{CLIENT_URL}/ideas/{ideaId}?purchase=success`
+
+---
+
+### 📤 Upload
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/upload/image` | Member | Upload single image to Cloudinary |
+
+**Request:** `multipart/form-data` with field name `file`
+**Response:** `{ "url": "https://res.cloudinary.com/..." }`
+
+Constraints: images only, max 5 MB per file.
+
+---
+
+### 👑 Admin
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/admin/stats` | Admin | Platform statistics |
+| `GET` | `/admin/users` | Admin | List all users |
+| `PATCH` | `/admin/users/:id/toggle-active` | Admin | Enable / disable user account |
+| `PATCH` | `/admin/users/:id/role` | Admin | Change user role |
+| `DELETE` | `/admin/ideas/:id` | Admin | Force-delete any idea |
+| `POST` | `/admin/newsletter/subscribe` | — | Subscribe email to newsletter |
+
+**`GET /admin/stats`** response:
+```json
+{
+  "totalUsers": 157,
+  "totalIdeas": 342,
+  "pendingIdeas": 12,
+  "approvedIdeas": 289
+}
+```
+
+**`GET /admin/users`** query params: `page`, `limit`, `search`
 
 ---
 
@@ -108,212 +363,213 @@ Enums:
 
 ### Prerequisites
 
-- Node.js 20+
-- PostgreSQL database (or a hosted provider like [Neon](https://neon.tech))
-- Cloudinary account
-- Stripe account (for payment features)
+- **Node.js** 20 or later
+- **PostgreSQL** database (local or hosted — e.g. [Supabase](https://supabase.com/), [Neon](https://neon.tech/))
+- **Stripe** account (for payments)
+- **Cloudinary** account (for image uploads)
 
-### 1. Clone & Install
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/SamiulIslam007/EcoSpark-api.git
-cd ecospark-api
+git clone https://github.com/your-username/ecospart-api.git
+cd ecospart-api
+```
+
+### 2. Install dependencies
+
+```bash
 npm install
 ```
 
-### 2. Configure Environment Variables
-
-Copy the example file and fill in your values:
+### 3. Configure environment variables
 
 ```bash
 cp .env.example .env
 ```
 
+Fill in all values — see [Environment Variables](#-environment-variables) below.
+
+### 4. Set up the database
+
+```bash
+# Push schema to your database (dev — no migration history)
+npm run db:push
+
+# Or use migrations (recommended for production)
+npm run db:migrate
+
+# Optional: seed with demo data
+npm run db:seed
+```
+
+### 5. Start the development server
+
+```bash
+npm run dev
+```
+
+API available at [http://localhost:5000](http://localhost:5000).
+
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file in the project root:
+
 ```env
-# Database
+# ─── Database ───────────────────────────────────────────────────────────────
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=require"
 
-# Better Auth
-BETTER_AUTH_SECRET="a-long-random-secret"
+# ─── Better Auth ────────────────────────────────────────────────────────────
+# Generate with: openssl rand -base64 32
+BETTER_AUTH_SECRET="your_random_secret_min_32_chars"
+
+# No trailing slash — must match the deployed API URL
 BETTER_AUTH_URL="http://localhost:5000"
+
+# Your frontend URL — used for CORS and Stripe redirect URLs
 CLIENT_URL="http://localhost:3000"
 
-# Stripe
+# Optional: extra trusted origins (comma or space separated)
+# TRUSTED_ORIGINS="https://preview.vercel.app https://staging.vercel.app"
+
+# ─── Stripe ─────────────────────────────────────────────────────────────────
 STRIPE_SECRET_KEY="sk_test_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 
-# Cloudinary
+# ─── Cloudinary ─────────────────────────────────────────────────────────────
 CLOUDINARY_CLOUD_NAME="your_cloud_name"
 CLOUDINARY_API_KEY="your_api_key"
 CLOUDINARY_API_SECRET="your_api_secret"
 
-# Server
+# ─── Server ─────────────────────────────────────────────────────────────────
 PORT=5000
-NODE_ENV=development
+NODE_ENV="development"
 ```
 
-### 3. Set Up the Database
+> **Startup validation:** `validateEnv.ts` runs at boot and throws if any required variable is missing, preventing silent failures.
+
+---
+
+## 📜 Available Scripts
 
 ```bash
-# Push schema to your database
-npx prisma db push
-
-# (Optional) Seed with realistic demo data
-npx ts-node --esm prisma/seed.ts
+npm run dev          # Start dev server with hot-reload (tsx watch)
+npm run build        # Compile TypeScript → dist/
+npm run start        # Run compiled production server
+npm run db:push      # Push Prisma schema (no migrations)
+npm run db:migrate   # Run Prisma migrations (dev)
+npm run db:seed      # Seed database with demo data
+npm run db:studio    # Open Prisma Studio in browser
 ```
 
-The seed script creates:
+---
 
-- 8 sustainability categories
-- 5 users (1 admin + 4 members)
-- 12 ideas (mix of free & paid, approved/draft/rejected) with Unsplash images
-- Votes, comments, and newsletter subscribers
+## 🔐 Authentication
 
-### 4. Run Locally
+This API uses **Better Auth** with PostgreSQL as the session store.
+
+### How it Works
+
+1. **Sign-up / Sign-in** → Better Auth creates a session row in PostgreSQL and sets an `HttpOnly` session cookie
+2. **Protected routes** → `protect` middleware calls `auth.api.getSession()` to validate the cookie
+3. **Role check** → `adminOnly` middleware verifies `req.user.role === "ADMIN"`
+
+### Middleware
+
+```typescript
+// Protect any route
+router.get("/my-route", protect, adminOnly, handler);
+
+// req.user is available in all protected handlers:
+interface RequestUser {
+  id: string;
+  role: "MEMBER" | "ADMIN";
+}
+```
+
+### Cookie Names
+
+The session cookie is named:
+- `better-auth.session_token` (HTTP)
+- `__Secure-better-auth.session_token` (HTTPS / production)
+
+---
+
+## 💳 Payment Flow
+
+```
+Member clicks "Unlock" on a paid idea
+    │
+    ▼
+POST /payments/checkout { ideaId }
+    │
+    ▼
+Server creates Stripe Checkout Session
+    │
+    ▼
+Response: { url: "https://checkout.stripe.com/..." }
+    │
+    ▼
+Client redirects user to Stripe-hosted checkout page
+    │
+    ▼
+User completes payment on Stripe
+    │
+    ▼
+Stripe calls POST /payments/webhook (checkout.session.completed)
+    │
+    ▼
+Server verifies webhook signature + creates Purchase record
+    │
+    ▼
+Stripe redirects user to {CLIENT_URL}/ideas/{ideaId}?purchase=success
+    │
+    ▼
+Frontend shows success toast + unlocks full idea content
+```
+
+### Setting Up Stripe Webhooks (local dev)
 
 ```bash
-# Development (with ts-node)
-npm run dev
+# Install Stripe CLI
+stripe listen --forward-to localhost:5000/api/v1/payments/webhook
 
-# Build and run compiled output
-npm run build
-npm start
+# Copy the webhook signing secret it outputs into your .env:
+# STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 ---
 
-## 📡 API Reference
+## 🖼 Image Uploads
 
-All endpoints are prefixed with `/api/v1`.
+Images are uploaded in two steps:
 
-### Authentication
+1. **Multer** receives the file into memory (max 5 MB, `image/*` only)
+2. **Cloudinary** receives the buffer via a server-side stream upload
 
-Better Auth handles auth at `/api/v1/auth/*` (same `/api/v1` prefix as the REST API). See [Better Auth docs](https://better-auth.com/docs) for details on email/password, OAuth, and session management.
-
----
-
-### Categories
-
-
-| Method   | Endpoint          | Auth  | Description         |
-| -------- | ----------------- | ----- | ------------------- |
-| `GET`    | `/categories`     | —     | List all categories |
-| `POST`   | `/categories`     | Admin | Create a category   |
-| `PATCH`  | `/categories/:id` | Admin | Update a category   |
-| `DELETE` | `/categories/:id` | Admin | Delete a category   |
-
-
----
-
-### Ideas
-
-
-| Method   | Endpoint             | Auth     | Description                                         |
-| -------- | -------------------- | -------- | --------------------------------------------------- |
-| `GET`    | `/ideas`             | —        | List all approved ideas (with filters)              |
-| `GET`    | `/ideas/:id`         | Optional | Get idea detail (auth/purchase gate for paid ideas) |
-| `GET`    | `/ideas/my`          | Member   | Get my own ideas                                    |
-| `POST`   | `/ideas`             | Member   | Create a new idea (supports image upload)           |
-| `PATCH`  | `/ideas/:id`         | Member   | Update a draft idea (supports image upload)         |
-| `DELETE` | `/ideas/:id`         | Member   | Delete a draft idea                                 |
-| `PATCH`  | `/ideas/:id/submit`  | Member   | Submit idea for admin review                        |
-| `PATCH`  | `/ideas/:id/approve` | Admin    | Approve an idea                                     |
-| `PATCH`  | `/ideas/:id/reject`  | Admin    | Reject with feedback                                |
-| `GET`    | `/ideas/admin/all`   | Admin    | List all ideas with full details                    |
-
-
-**Query params for `GET /ideas`:**
-
-
-| Param      | Type    | Description                                       |
-| ---------- | ------- | ------------------------------------------------- |
-| `page`     | number  | Page number (default: 1)                          |
-| `limit`    | number  | Items per page (default: 10)                      |
-| `category` | string  | Filter by category slug                           |
-| `search`   | string  | Full-text search on title/description             |
-| `sort`     | string  | `newest` | `popular` | `price-asc` | `price-desc` |
-| `isPaid`   | boolean | Filter free or paid ideas                         |
-
-
-**Image uploads** use `multipart/form-data` with field name `images` (max 5 files, 5 MB each). Files are uploaded to Cloudinary automatically.
-
----
-
-### Votes
-
-
-| Method | Endpoint | Auth   | Description                      |
-| ------ | -------- | ------ | -------------------------------- |
-| `POST` | `/votes` | Member | Cast or toggle a vote on an idea |
-
-
-```json
-// POST /api/v1/votes
-{ "ideaId": "...", "type": "UPVOTE" }
+```typescript
+// POST /upload/image
+// multipart/form-data, field: "file"
+// Response: { "url": "https://res.cloudinary.com/..." }
 ```
 
----
-
-### Comments
-
-
-| Method   | Endpoint               | Auth         | Description              |
-| -------- | ---------------------- | ------------ | ------------------------ |
-| `GET`    | `/comments?ideaId=...` | —            | Get comments for an idea |
-| `POST`   | `/comments`            | Member       | Post a comment           |
-| `DELETE` | `/comments/:id`        | Member/Admin | Delete a comment         |
-
+The returned Cloudinary URL is stored in the `images: String[]` array on the `Idea` model.
 
 ---
 
-### Payments
+## 🌍 Deployment
 
+The API is deployed on **Vercel** as a serverless Node.js function.
 
-| Method | Endpoint                    | Auth   | Description                      |
-| ------ | --------------------------- | ------ | -------------------------------- |
-| `POST` | `/payments/create-checkout` | Member | Create a Stripe checkout session |
-| `POST` | `/payments/webhook`         | —      | Stripe webhook (raw body)        |
-| `GET`  | `/payments/my-purchases`    | Member | List user's purchased ideas      |
-
-
----
-
-### Admin
-
-
-| Method  | Endpoint                         | Auth  | Description                   |
-| ------- | -------------------------------- | ----- | ----------------------------- |
-| `GET`   | `/admin/users`                   | Admin | List all users                |
-| `PATCH` | `/admin/users/:id/toggle-active` | Admin | Activate/deactivate a user    |
-| `PATCH` | `/admin/users/:id/role`          | Admin | Change user role              |
-| `GET`   | `/admin/stats`                   | Admin | Platform statistics dashboard |
-
-
----
-
-## 🌐 Deployment (Vercel)
-
-### Environment Variables
-
-In your Vercel project dashboard → **Settings → Environment Variables**, add all variables from `.env.example`:
-
-- `DATABASE_URL`
-- `BETTER_AUTH_SECRET`
-- `BETTER_AUTH_URL` ← set to your production API URL
-- `CLIENT_URL` ← set to your frontend URL
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `CLOUDINARY_CLOUD_NAME`
-- `CLOUDINARY_API_KEY`
-- `CLOUDINARY_API_SECRET`
-
-### Build & Output
+### Deploy with Vercel CLI
 
 ```bash
-npm run build   # runs tsc → outputs to dist/src/
+npm run build        # Compile TypeScript first
+vercel --prod
 ```
 
-`vercel.json` routes all requests to `dist/src/server.js`:
+### `vercel.json`
 
 ```json
 {
@@ -323,154 +579,45 @@ npm run build   # runs tsc → outputs to dist/src/
 }
 ```
 
-### Stripe Webhooks
+### Production Checklist
 
-After deploying, register your webhook endpoint in the Stripe Dashboard:
-
-```
-https://your-api.vercel.app/api/v1/payments/webhook
-```
-
-Select the event `checkout.session.completed`.
-
----
-
-## 🧪 Seed Data
-
-The seed script (`prisma/seed.ts`) populates the database with realistic demo content:
-
-```bash
-npx ts-node --esm prisma/seed.ts
-```
-
-**What gets created:**
-
-
-| Resource               | Count | Notes                                                             |
-| ---------------------- | ----- | ----------------------------------------------------------------- |
-| Categories             | 8     | Renewable Energy, Waste Reduction, Sustainable Agriculture, etc.  |
-| Users                  | 5     | 1 admin (`admin@admin.com`) + 4 members                           |
-| Ideas                  | 12    | Mix of free & paid, approved/draft/rejected, with Unsplash images |
-| Votes                  | ~20   | Distributed across approved ideas                                 |
-| Comments               | 6     | Contextual sustainability discussions                             |
-| Newsletter subscribers | 3     | —                                                                 |
-
-
-**Admin credentials** (for demo / testing after seed):
-
-```json
-{
-  "name": "Admin",
-  "email": "admin@admin.com",
-  "password": "Admin123"
-}
-```
-
-**Member credentials** (demo member after seed):
-
-```json
-{
-  "email": "samiul@gmail.com",
-  "password": "Samiul123"
-}
-```
-
-> The seed uses idempotent upserts — safe to run multiple times without creating duplicates. Other seeded members use password `Password123!` (see console output after `npm run db:seed`).
+- [ ] All environment variables set in Vercel dashboard
+- [ ] `DATABASE_URL` points to a production PostgreSQL instance (e.g. Neon, Supabase)
+- [ ] `CLIENT_URL` set to the production frontend URL
+- [ ] `BETTER_AUTH_URL` set to the production API URL (no trailing slash)
+- [ ] Stripe webhook registered for the production URL: `https://your-api.vercel.app/api/v1/payments/webhook`
+- [ ] `NODE_ENV=production` set
 
 ---
 
-## 🖼️ Media Uploads
-
-Images are stored on **Cloudinary** under the `ecospark/` folder.
-
-**Upload flow:**
+## 💡 Idea Status Flow
 
 ```
-Client (multipart/form-data)
-  → Multer (memory buffer, max 5 files × 5 MB)
-  → uploadToCloudinary(buffer)
-  → Cloudinary CDN URL stored in DB
-```
-
-**Supported formats:** JPEG, PNG, WebP, GIF (any `image/`* MIME type)
-
----
-
-## 🔐 Authentication Flow
-
-EcoSpark uses **Better Auth** for all authentication concerns:
-
-```
-POST /api/v1/auth/sign-up/email   → Register
-POST /api/v1/auth/sign-in/email   → Login
-POST /api/v1/auth/sign-out        → Logout
-GET  /api/v1/auth/get-session     → Current session
-```
-
-Protected routes use the `protect` middleware, which reads the session from the `Authorization` header or session cookie. Admin routes additionally use `adminOnly` middleware.
-
----
-
-## 📁 Project Structure Reference
-
-```
-ecospark-api/
-├── prisma/
-│   ├── schema.prisma          # DB models & enums
-│   └── seed.ts                # Demo data seeder
-├── src/
-│   ├── app/
-│   │   ├── config/
-│   │   │   └── index.ts       # better-auth instance
-│   │   ├── errors/
-│   │   │   └── AppError.ts    # Custom HTTP error class
-│   │   ├── interfaces/        # Shared TS interfaces
-│   │   ├── middlewares/
-│   │   │   ├── auth.middleware.ts
-│   │   │   ├── adminOnly.middleware.ts
-│   │   │   ├── upload.middleware.ts  # Multer config
-│   │   │   ├── globalError.middleware.ts
-│   │   │   └── notFound.middleware.ts
-│   │   ├── modules/
-│   │   │   ├── admin/         # User management & stats
-│   │   │   ├── category/      # Category CRUD
-│   │   │   ├── comment/       # Idea comments
-│   │   │   ├── idea/          # Core idea lifecycle
-│   │   │   ├── payment/       # Stripe integration
-│   │   │   └── vote/          # Voting system
-│   │   ├── routes/
-│   │   │   └── index.ts       # Route aggregator
-│   │   └── utils/
-│   │       ├── catchAsync.ts
-│   │       ├── cloudinary.ts  # Upload & delete helpers
-│   │       ├── sendResponse.ts
-│   │       └── validateEnv.ts
-│   ├── app.ts                 # Express setup & middleware
-│   └── server.ts              # Local server entry point
-├── .env.example
-├── prisma.config.ts
-├── tsconfig.json
-├── vercel.json
-└── package.json
+          ┌──────────┐
+          │  DRAFT   │  ◄── Member creates idea
+          └────┬─────┘
+               │  Member submits for review
+               ▼
+       ┌───────────────┐
+       │  UNDER_REVIEW │  ◄── Awaiting admin decision
+       └───┬───────┬───┘
+           │       │
+  Admin    │       │  Admin
+  approves │       │  rejects (with feedback)
+           ▼       ▼
+      ┌──────┐  ┌──────────┐
+      │APPROV│  │ REJECTED │  ◄── Member can edit + resubmit
+      │  ED  │  └──────────┘
+      └──────┘
+         │
+  Visible on
+  public ideas page
 ```
 
 ---
 
-## 🤝 Contributing
+<div align="center">
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feat/your-feature`
-3. Commit your changes: `git commit -m "feat: add your feature"`
-4. Push and open a Pull Request
+Made with 💚 for a greener world · [EcoSpark Hub API](https://ecospark-api.vercel.app)
 
-Please follow the existing module structure: add new features as a `src/app/modules/<feature>/` folder with `routes`, `controller`, `service`, and `interface` files.
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License**.
-
----
-
-Made with 💚 for a greener planet
+</div>
